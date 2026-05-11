@@ -4,7 +4,9 @@
 
 ## Overview
 
-This repository contains the datasets, code, and analysis results for the experiments from our paper, *"Lexical Familiarity Predicts Processing Depth for Nonliteral Language in Large Language Models."* Our research investigates how Large Language Models (LLMs) process language that deviates from literal, standard usage. By analyzing layer-wise representations using Gemma-Scope-2 Sparse Autoencoders (SAEs), we establish a "lexical familiarity gradient" across five categories of nonliteral language.
+This repository contains the datasets, code, and analysis results for the experiments from our paper, *"Lexical Familiarity Predicts Processing Depth for Nonliteral Language in Large Language Models."* Our research investigates how Large Language Models (LLMs) process language that deviates from literal, standard usage. By analyzing layer-wise representations using Sparse Autoencoders (SAEs), we establish a "lexical familiarity gradient" across five categories of nonliteral language.
+
+The main experiments use **Gemma-3-12B-IT** with Gemma-Scope-2 SAEs. We additionally include model-generalization experiments on **Gemma-3-12B-PT** (pre-trained base) and **Qwen3.5-9B-Base** (with Qwen-Scope SAEs) to verify that the lexical familiarity gradient is not specific to a single model or to instruction tuning.
 
 ## Repository Structure
 
@@ -19,37 +21,31 @@ This repository contains the datasets, code, and analysis results for the experi
 │   ├── literal_paraphrase.csv              # Baseline literal language data
 │   └── identical_sentence_pair.csv         # Control pairs
 ├── scripts/
-│   ├── run.py                              # Main SAE feature extraction and analysis
-│   ├── lf_full.py                          # Lexical familiarity score computation (full, tokenizer-based)
-│   ├── lf_simplified.py                    # Lexical familiarity score computation (simplified)
-│   ├── normal_approx_ci.py                 # 95% confidence interval computation for results
-│   ├── span_length.py                      # Divergence span length confound analysis
-│   └── README.md                           # Script usage instructions
+│   ├── README.md                           # Script usage instructions
+│   ├── Gemma-12B-IT/                       # Main experiments (Gemma-3-12B-IT + Gemma-Scope-2)
+│   │   ├── run.py                          # Main SAE feature extraction and analysis
+│   │   ├── lf_full.py                      # Lexical familiarity score (full, tokenizer-based)
+│   │   ├── lf_simplified.py                # Lexical familiarity score (simplified)
+│   │   ├── normal_approx_ci.py             # 95% CI computation for results
+│   │   └── span_length.py                  # Divergence span length confound analysis
+│   ├── Gemma-12B-PT/                       # Generalization: Gemma-3-12B pre-trained base
+│   │   └── run_pt.py                       # SAE analysis on Gemma-3-12B-PT
+│   └── Qwen-9B-Base/                       # Generalization: Qwen3.5-9B-Base
+│       └── run_qwen.py                     # SAE analysis on Qwen3.5-9B-Base (Qwen-Scope SAEs)
 ├── results/
-│   ├── idioms.csv                          # Layer-wise SAE analysis results for idioms
-│   ├── metaphors.csv                       # Layer-wise SAE analysis results for metaphors
-│   ├── slang_neologisms.csv                # Layer-wise SAE analysis results for neologisms
-│   ├── slang_semantic_shift.csv            # Layer-wise SAE analysis results for semantic shift
-│   ├── slang_constructional.csv            # Layer-wise SAE analysis results for constructional slang
-│   ├── literal_paraphrase.csv              # Layer-wise SAE analysis results for literal language
-│   ├── identical_sentence_pair.csv         # Layer-wise SAE analysis results for control pairs
-│   ├── ci/
-│   │   ├── all_categories_with_ci.csv      # Cosine distances with 95% CIs across all categories
-│   │   ├── overlap_analysis.csv            # CI overlap analysis across categories
-│   │   ├── table2_with_ci.csv              # Table 2 data with confidence intervals
-│   │   ├── table3_with_ci.csv              # Table 3 data with confidence intervals
-│   │   ├── table2_latex.tex                # LaTeX source for Table 2
-│   │   ├── table3_latex.tex                # LaTeX source for Table 3
-│   │   ├── figure1_with_ci.png             # Figure 1 with confidence intervals
-│   │   └── residual_analysis.png           # Residual diagnostic plots
-│   └── lexical_familiarity/
-│       ├── lf_scores_all_items.csv         # Per-item lexical familiarity scores
-│       ├── lf_peak_layer_figure.png        # Category means with 95% CIs (Figure for paper)
-│       ├── lf_analysis_plots.png           # Diagnostic panels (supplementary)
-│       └── lf_table.tex                    # LaTeX table for LF analysis
+│   ├── Gemma-12B-IT/                       # Main results (per category + CI + LF analysis)
+│   │   ├── idiom/, metaphor/, neo/, semantic/, const/
+│   │   ├── identical/, literal-paraphrase/
+│   │   ├── feature_ratio/
+│   │   ├── ci/                             # Cosine distances with 95% CIs, paper tables/figures
+│   │   └── lexical_familiarity/            # Per-item LF scores, regression figure, LaTeX table
+│   ├── Gemma-12B-PT/                       # Same layout as above, for Gemma-3-12B-PT
+│   └── Qwen-9B-Base/                       # Same layout as above, for Qwen3.5-9B-Base
 ├── requirements.txt                        # Python package dependencies
 └── README.md
 ```
+
+Within each model's `results/<category>/` folder you will find layer-wise SAE feature activations, cosine-distance curves, and (for PT/Qwen) per-layer checkpoint CSVs and diagnostic plots produced by the corresponding `run_*.py` script.
 
 ## Data Format
 
@@ -64,36 +60,49 @@ Column names vary by category (e.g., `idiomatic`/`normal` for idioms, `metaphori
 
 ## Scripts
 
-### `scripts/run.py` — Main SAE Analysis
+### Main experiments — `scripts/Gemma-12B-IT/`
 
-This is the main analysis script that:
+#### `run.py` — Main SAE Analysis
+
+The primary analysis script that:
 
 1. **Loads datasets** from the `data/` directory
 2. **Extracts SAE features** from Gemma-Scope-2 Sparse Autoencoders for each sentence pair
 3. **Computes layer-wise representations** across all 48 layers of the model
 4. **Analyzes feature distributions** to identify the lexical familiarity gradient
-5. **Generates results** and saves them to the `results/` directory
+5. **Generates results** and saves them to `results/Gemma-12B-IT/`
 
-### `scripts/lf_full.py` — Lexical Familiarity (Full)
+#### `lf_full.py` — Lexical Familiarity (Full)
 
 Computes the lexical familiarity (LF) score for each item using the actual Gemma tokenizer. The LF score combines:
+
 - **Subword fragmentation index**: number of subword tokens / number of whitespace words (higher = less familiar)
 - **Token frequency percentile**: average frequency rank of span tokens (higher = more frequent)
 - **Combined LF score**: `LF = −z(fragmentation) + z(frequency)` (higher = more familiar)
 
 Also runs regression analysis (`peak_layer ~ lf_score`) and generates publication-quality figures and LaTeX tables.
 
-### `scripts/lf_simplified.py` — Lexical Familiarity (Simplified)
+#### `lf_simplified.py` — Lexical Familiarity (Simplified)
 
 A streamlined version of `lf_full.py` using the same tokenizer-based computation but with a simpler interface. Suitable for quick reproduction of the key regression results.
 
-### `scripts/normal_approx_ci.py` — Confidence Intervals
+#### `normal_approx_ci.py` — Confidence Intervals
 
 Computes 95% confidence intervals for layer-wise cosine distances using the normal approximation formula (`CI = mean ± 1.96 × SE`). Generates CI tables and LaTeX output for the paper.
 
-### `scripts/span_length.py` — Span Length Confound Analysis
+#### `span_length.py` — Span Length Confound Analysis
 
 Checks whether divergence span length (in words) is a confound for the observed peak cosine distances. Runs correlation and regression analyses to verify that the lexical familiarity gradient holds independently of span length.
+
+### Model-generalization experiments
+
+#### `scripts/Gemma-12B-PT/run_pt.py`
+
+Re-runs the token-level SAE analysis on **Gemma-3-12B-PT** (the pre-trained base model, no instruction tuning) using the same Gemma-Scope-2 SAEs. Outputs are written to `results/Gemma-12B-PT/`, including per-layer checkpoint CSVs and feature-activation comparison plots.
+
+#### `scripts/Qwen-9B-Base/run_qwen.py`
+
+Replicates the analysis on **Qwen3.5-9B-Base** using the Top-K residual Qwen-Scope SAE release `qwen-scope-3.5-9b-base-w64k-l100` (K=100, width 65,536; HF: `Qwen/SAE-Res-Qwen3.5-9B-Base-W64K-L0_100`). Iterates over all datasets in a single run so the model is loaded only once. No HF token is required. Outputs are written to `results/Qwen-9B-Base/`.
 
 ## Requirements
 
@@ -103,7 +112,7 @@ Checks whether divergence span length (in words) is a confound for the observed 
 - SAE-Lens library for working with Sparse Autoencoders
 - NumPy, Pandas, SciPy, statsmodels for data processing and statistics
 - Matplotlib & Seaborn for visualization
-- A Hugging Face API token (required to access Gemma models)
+- A Hugging Face API token (required to access Gemma models; not required for Qwen)
 
 ### Setup Instructions
 
@@ -112,42 +121,52 @@ Checks whether divergence span length (in words) is a confound for the observed 
    pip install -r requirements.txt
    ```
 
-2. **Configure your Hugging Face token:**
+2. **Configure your Hugging Face token** (Gemma only):
    Create a `.env` file in the repository root:
    ```
    HF_TOKEN=your_huggingface_token_here
    ```
    A token can be obtained from https://huggingface.co/settings/tokens
 
-3. **Run the main SAE analysis:**
+3. **Run the main SAE analysis (Gemma-3-12B-IT):**
    ```bash
-   cd scripts
+   cd scripts/Gemma-12B-IT
    python run.py
    ```
 
 4. **Compute lexical familiarity scores:**
    ```bash
    # Full analysis (recommended for reproduction)
-   python scripts/lf_full.py --data-dir ./data --output ./results/lexical_familiarity
+   python scripts/Gemma-12B-IT/lf_full.py --data-dir ./data --output ./results/Gemma-12B-IT/lexical_familiarity
 
    # Simplified analysis
-   python scripts/lf_simplified.py --data-dir ./data --output ./results/lexical_familiarity
+   python scripts/Gemma-12B-IT/lf_simplified.py --data-dir ./data --output ./results/Gemma-12B-IT/lexical_familiarity
    ```
 
 5. **Compute confidence intervals:**
    ```bash
-   python scripts/normal_approx_ci.py
+   python scripts/Gemma-12B-IT/normal_approx_ci.py
+   ```
+
+6. **(Optional) Run the model-generalization experiments:**
+   ```bash
+   # Gemma-3-12B-PT
+   python scripts/Gemma-12B-PT/run_pt.py
+
+   # Qwen3.5-9B-Base
+   python scripts/Qwen-9B-Base/run_qwen.py
    ```
 
 ## Results
 
-The `results/` directory contains pre-computed outputs:
+Each `results/<model>/` directory contains pre-computed outputs with the same layout:
 
-- **Root-level CSVs** (`results/*.csv`): Layer-wise feature activations, cosine distances between figurative and literal representations, and figurative-to-literal feature ratios across all 48 model layers — one file per nonliteral category.
-- **`results/ci/`**: Cosine distance curves with 95% confidence intervals, CI overlap analysis, and LaTeX-formatted tables (Table 2 and Table 3 from the paper).
-- **`results/lexical_familiarity/`**: Per-item LF scores, regression figures, and the LaTeX table for the lexical familiarity analysis section.
+- **Per-category folders** (`idiom/`, `metaphor/`, `neo/`, `semantic/`, `const/`, `identical/`, `literal-paraphrase/`): layer-wise SAE feature activations and cosine distances between figurative and literal representations.
+- **`feature_ratio/`**: figurative-to-literal feature ratio analyses.
+- **`ci/`**: cosine distance curves with 95% confidence intervals, CI overlap analysis, and LaTeX-formatted tables (Table 2 and Table 3 from the paper).
+- **`lexical_familiarity/`** (Gemma-12B-IT) / **`lexical_familarity/`** (PT, Qwen): per-item LF scores, regression figures, and the LaTeX table for the lexical familiarity analysis section.
 
-### Key Findings (from `results/lexical_familiarity/README.md`)
+### Key Findings (Gemma-3-12B-IT, from `results/Gemma-12B-IT/lexical_familiarity/README.md`)
 
 | Category | LF Score | Peak Layer | N |
 |---|---|---|---|
@@ -157,4 +176,4 @@ The `results/` directory contains pre-computed outputs:
 | Semantic Shift | +0.02 | L9 | 1002 |
 | Neologism | −1.37 | L41 | 1000 |
 
-Lexical familiarity score significantly predicts peak divergence layer (β = −5.88, p < .001, R² = 0.342). At the category level, mean LF score correlates near-perfectly with peak layer (r = −0.95).
+Lexical familiarity score significantly predicts peak divergence layer (β = −5.88, p < .001, R² = 0.342). At the category level, mean LF score correlates near-perfectly with peak layer (r = −0.95). The same gradient is reproduced on Gemma-3-12B-PT and Qwen3.5-9B-Base — see `results/Gemma-12B-PT/` and `results/Qwen-9B-Base/`.
