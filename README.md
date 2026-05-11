@@ -1,7 +1,6 @@
 # Lexical Familiarity Predicts Processing Depth for Nonliteral Language in Large Language Models
 
-> **Anonymity Notice:** This repository is fully anonymized for double-blind peer review. All author identities, affiliations, and specific institutional acknowledgments have been removed.
-
+> **Accepted to TrustNLP 2026:** This repository contains the official code, datasets, and pre-computed results for the paper "Lexical Familiarity Predicts Processing Depth for Nonliteral Language in Large Language Models" (Paper ID: 68).
 ## Overview
 
 This repository contains the datasets, code, and analysis results for the experiments from our paper, *"Lexical Familiarity Predicts Processing Depth for Nonliteral Language in Large Language Models."* Our research investigates how Large Language Models (LLMs) process language that deviates from literal, standard usage. By analyzing layer-wise representations using Sparse Autoencoders (SAEs), we establish a "lexical familiarity gradient" across five categories of nonliteral language.
