@@ -4,6 +4,8 @@ Scripts for reproducing the experiments including:
 - `run.py`: main SAE analysis script
 - `lf_simplified.py`, `lf_full.py`: compute lexical familiarity score script
 
+(Optional)Scripts for Gemma-12B-PT & Qwen-9B-Base model-generalization experiments can be accessed in respective folders.
+
 ## How To Run
 
 1. `run.py`:

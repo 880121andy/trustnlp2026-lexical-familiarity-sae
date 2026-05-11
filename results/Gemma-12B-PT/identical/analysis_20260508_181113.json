@@ -1,0 +1,11 @@
+{
+  "peak_layer": 0,
+  "peak_pct": 0.0,
+  "peak_value": 0.0,
+  "early_mean": 0.0,
+  "middle_mean": 0.0,
+  "deep_mean": 0.0,
+  "anova_f": NaN,
+  "anova_p": NaN,
+  "verdict": "NOT SUPPORTED"
+}

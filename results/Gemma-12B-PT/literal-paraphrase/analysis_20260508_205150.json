@@ -1,0 +1,11 @@
+{
+  "peak_layer": 47,
+  "peak_pct": 100.0,
+  "peak_value": 10284.563767456055,
+  "early_mean": 280.6326803704878,
+  "middle_mean": 2390.266975642204,
+  "deep_mean": 8066.838095589132,
+  "anova_f": 159.53375562391295,
+  "anova_p": 3.721244861340503e-21,
+  "verdict": "SUPPORTED"
+}
